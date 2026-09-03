@@ -4,8 +4,11 @@ import sys
 import re
 from contextlib import suppress
 
-# Add src to sys.path to allow imports
-sys.path.append(os.path.join(os.getcwd(), "src"))
+# Add src to sys.path to allow imports regardless of CWD
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 try:
     from playwright.async_api import Error as PlaywrightError
