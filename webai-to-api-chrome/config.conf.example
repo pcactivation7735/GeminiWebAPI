@@ -1,0 +1,152 @@
+# Configuration File for WebAI-to-API Server
+# -------------------------------------------
+# ⚠️ Note: This file is *only* used by the WebAI-to-API server.
+
+# --- General Settings ---
+# Check origin/master for a newer project version after server startup.
+# This only logs a notification; it never updates automatically.
+[General]
+check_updates = true
+
+# --- Browser Settings ---
+# name: Host browser used for local cookie discovery (chrome, firefox, brave, edge, safari).
+# runtime: Browser automation runtime backend (playwright).
+# use_system_chrome: Set to true to use Google Chrome installed on your machine instead of downloading Playwright Chromium.
+#                   (Mặc định sử dụng Google Chrome cài sẵn trên máy thay vì tải Playwright Chromium).
+# chrome_channel: Channel to launch (chrome, chrome-beta, msedge). Default: chrome
+# chrome_path: Optional custom path to chrome executable if installed in non-standard path.
+#              Leave blank for auto-detection across Windows, macOS, and Linux.
+#              Windows: C:\Program Files\Google\Chrome\Application\chrome.exe
+#              macOS:   /Applications/Google Chrome.app/Contents/MacOS/Google Chrome
+#              Linux:   /usr/bin/google-chrome
+[Browser]
+name = chrome
+runtime = playwright
+use_system_chrome = true
+chrome_channel = chrome
+chrome_path =
+
+# --- Authentication Methods ---
+# WebAI-to-API supports multiple authentication approaches:
+#
+# 1. MANUAL COOKIES (Gemini WebAPI):
+#    - Add __Secure-1PSID and __Secure-1PSIDTS below
+#    - Works immediately, no browser required
+#
+# 2. BROWSER LOGIN (Playwright):
+#    - Run: poetry run python verify_login.py (on HOST machine, not in Docker)
+#    - Creates runtime/auth/gemini.json with authentication state
+#    - Docker container automatically consumes this file
+#    - Required for: playwright/* model requests
+#
+# For Docker + Playwright deployments: Use Method 2 (verify_login.py)
+
+# --- Gemini Configuration ---
+# Configure the Google Gemini provider.
+#
+# Execution Strategy:
+# - webapi:    Lightweight, fast, uses unofficial API wrappers.
+# - playwright: Browser-native runtime (Chromium). Most resilient.
+# NOTE: Using a 'playwright/...' model prefix in your request will
+# automatically override this global backend configuration.
+#
+# Default Model:
+# Choose the model to be used when none is specified in the request.
+# Default Gemini model. Runtime availability is discovered from the current account.
+#
+# Optional manual Gemini WebAPI authentication.
+# Prefer browser login which stores auth state in runtime/auth/gemini.json.
+# __Secure-1PSID is required; __Secure-1PSIDTS is optional.
+[Gemini]
+backend = webapi
+default_model = gemini-3-flash
+extended_thinking = false
+__Secure-1PSID =
+__Secure-1PSIDTS =
+
+# --- Legacy Cookie Support (DEPRECATED) ---
+# For backward compatibility only. Please migrate to [Gemini] section.
+# __Secure-1PSID is required; __Secure-1PSIDTS is optional in legacy format.
+[Cookies]
+gemini_cookie_1psid =
+gemini_cookie_1psidts = 
+
+# --- AI Services Toggle ---
+# Enable or disable specific AI providers.
+# Use "true" to enable and "false" to disable.
+[EnabledAI]
+gemini = true
+
+# --- Atlas Cloud Configuration ---
+# API key and endpoint for the Atlas Cloud provider.
+#
+# Precedence Order:
+# OS Env > .env.local > .env > config.conf > defaults
+#
+# NOTE: For production, Docker, or CI/CD deployments, it is highly 
+# recommended to use environment variables (ATLASCLOUD_API_KEY, 
+# ATLASCLOUD_BASE_URL) rather than committing secrets to this file.
+[Atlas]
+api_key = 
+base_url = https://api.atlascloud.ai/v1
+
+# --- Proxy Configuration ---
+# The app, use this proxy to connect gemini servers.
+# Its usefull to fix errors like 403 or restricted connections
+# Example: http_proxy = http://127.0.0.1:2334
+[Proxy]
+http_proxy = 
+
+# --- Playwright Settings ---
+# Settings for the browser automation engine.
+[Playwright]
+# Run in headless mode (true/false)
+# Note: Set to false for verify_login.py interactive login
+# Docker containers use PLAYWRIGHT_HEADLESS=true environment variable
+headless = false
+
+# Provider browser storage state directory. Default: RUNTIME_DIR/auth.
+# Set auth_state_dir only to use a separate directory; AUTH_STATE_DIR overrides it.
+# verify_login.py creates gemini.json in the resolved directory.
+
+# Concurrency locking backend for on-demand authentication coordination.
+# Default: in_memory (process-bound). Swapping this is required for production
+# multi-worker/Gunicorn or horizontally scaled SaaS deployments to avoid races.
+# Supported future values: redis, postgres.
+auth_lock_backend = in_memory
+
+# =====================================================================
+# --- Advanced Playwright Engine Tuning ---
+# ⚠️ Only modify these if you understand the runtime architecture.
+# =====================================================================
+
+# -- Capacity Limits --
+# Maximum concurrent pages across all sessions (HARD LIMIT via semaphore)
+max_concurrent_pages = 5
+
+# Global soft-cap for total open pages across all sessions (eviction threshold)
+max_total_tabs = 50
+
+# Maximum conversations to keep in the LRU registry per provider
+max_persistent_conversations = 20
+
+# -- Timeouts (Milliseconds) --
+# Passed directly to Playwright underlying APIs.
+navigation_timeout = 30000
+ui_wait_timeout = 15000
+
+# -- Timeouts (Seconds) --
+# Used by Python asyncio layer for application-level lifecycle management.
+chunk_timeout = 90
+total_request_timeout = 120
+idle_conversation_timeout = 900
+lease_timeout = 180
+
+# --- Logging Settings ---
+# Configure server log output and verbosity.
+# Precedence: CLI Arg > OS Env > config.conf > Default
+[Logging]
+# Log level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+level = INFO
+# Set to true to disable Uvicorn HTTP access logging
+disable_access_logs = false

@@ -1,0 +1,6 @@
+{
+  "name": "WebAI-to-API Chrome",
+  "description": "Fork of WebAI-to-API configured to use host system installed Google Chrome instead of Playwright Chromium",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
